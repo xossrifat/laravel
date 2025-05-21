@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telegram Login Test</title>
+    <meta name="csrf-token" content="" id="csrf-token">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen p-4">
+    <div class="max-w-md mx-auto bg-white p-6 rounded-lg shadow-md">
+        <h1 class="text-2xl font-bold mb-6 text-center">Telegram Login Test</h1>
+        
+        <!-- Status display -->
+        <div class="mb-6">
+            <h2 class="text-lg font-semibold mb-2">Status</h2>
+            <div id="status" class="p-4 bg-gray-100 rounded-lg">
+                Checking Telegram environment...
+            </div>
+        </div>
+        
+        <!-- Telegram init data -->
+        <div class="mb-6">
+            <h2 class="text-lg font-semibold mb-2">Telegram Init Data</h2>
+            <div id="initData" class="p-4 bg-gray-100 rounded-lg overflow-auto max-h-40 text-xs">
+                None
+            </div>
+        </div>
+        
+        <!-- User Data -->
+        <div class="mb-6">
+            <h2 class="text-lg font-semibold mb-2">User Data</h2>
+            <div id="userData" class="p-4 bg-gray-100 rounded-lg overflow-auto max-h-40">
+                None
+            </div>
+        </div>
+        
+        <!-- Test Button -->
+        <div class="flex justify-center mt-6">
+            <button id="testLoginBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-6 rounded-lg flex items-center">
+                <i class="fab fa-telegram mr-2"></i>
+                Test Telegram Login
+            </button>
+        </div>
+        
+        <!-- Results -->
+        <div class="mt-6">
+            <h2 class="text-lg font-semibold mb-2">Login Results</h2>
+            <div id="results" class="p-4 bg-gray-100 rounded-lg">
+                No login attempt yet
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Function to get CSRF token
+        async function getCsrfToken() {
+            try {
+                const response = await fetch('/csrf-token');
+                const data = await response.json();
+                return data.token;
+            } catch (e) {
+                console.error('Error fetching CSRF token:', e);
+                return '';
+            }
+        }
+        
+        // Function to handle login test
+        async function testTelegramLogin() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<div class="flex items-center"><svg class="animate-spin h-5 w-5 mr-3 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Testing login...</div>';
+            
+            try {
+                const telegramInitData = window.Telegram?.WebApp?.initData;
+                if (!telegramInitData) {
+                    resultsDiv.innerHTML = '<div class="text-red-600">Error: No Telegram init data available. Are you running this in a Telegram Mini App?</div>';
+                    return;
+                }
+                
+                // Get CSRF token
+                const csrfToken = await getCsrfToken();
+                if (!csrfToken) {
+                    resultsDiv.innerHTML = '<div class="text-red-600">Error: Could not get CSRF token</div>';
+                    return;
+                }
+                
+                // Update the token in the page
+                document.getElementById('csrf-token').content = csrfToken;
+                
+                // Send login request
+                const response = await fetch('/telegram-login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        initData: telegramInitData
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultsDiv.innerHTML = `
+                        <div class="text-green-600 font-medium">${data.message}</div>
+                        <div class="mt-2">
+                            <div><strong>User:</strong> ${data.user.name}</div>
+                            <div><strong>ID:</strong> ${data.user.id}</div>
+                            <div><strong>Coins:</strong> ${data.user.coins}</div>
+                            <div><strong>New User:</strong> ${data.is_new_user ? 'Yes' : 'No'}</div>
+                            <div><strong>Redirect URL:</strong> ${data.redirect}</div>
+                        </div>
+                        <div class="mt-4">
+                            <a href="${data.redirect}" class="text-blue-500 underline">Go to dashboard</a>
+                        </div>
+                    `;
+                } else {
+                    resultsDiv.innerHTML = `<div class="text-red-600">Error: ${data.message}</div>`;
+                }
+            } catch (e) {
+                resultsDiv.innerHTML = `<div class="text-red-600">Error: ${e.message}</div>`;
+                console.error('Login test error:', e);
+            }
+        }
+        
+        // Initialize on DOM ready
+        document.addEventListener('DOMContentLoaded', function() {
+            const statusDiv = document.getElementById('status');
+            const initDataDiv = document.getElementById('initData');
+            const userDataDiv = document.getElementById('userData');
+            const testBtn = document.getElementById('testLoginBtn');
+            
+            // Check Telegram environment
+            if (window.Telegram && window.Telegram.WebApp) {
+                statusDiv.innerHTML = '<div class="text-green-600"><i class="fas fa-check-circle mr-1"></i> Telegram Mini App environment detected</div>';
+                
+                // Display init data if available
+                if (window.Telegram.WebApp.initData) {
+                    initDataDiv.textContent = window.Telegram.WebApp.initData.substring(0, 100) + '...';
+                    
+                    // Try to get user data
+                    try {
+                        const userData = window.Telegram.WebApp.initDataUnsafe.user;
+                        if (userData) {
+                            userDataDiv.innerHTML = `
+                                <div><strong>ID:</strong> ${userData.id}</div>
+                                <div><strong>First Name:</strong> ${userData.first_name || 'N/A'}</div>
+                                <div><strong>Last Name:</strong> ${userData.last_name || 'N/A'}</div>
+                                <div><strong>Username:</strong> @${userData.username || 'N/A'}</div>
+                                <div><strong>Language:</strong> ${userData.language_code || 'N/A'}</div>
+                            `;
+                        }
+                    } catch (e) {
+                        userDataDiv.textContent = 'Error getting user data: ' + e.message;
+                    }
+                } else {
+                    initDataDiv.innerHTML = '<span class="text-orange-500">Available but empty!</span>';
+                    statusDiv.innerHTML = '<div class="text-orange-500"><i class="fas fa-exclamation-triangle mr-1"></i> Telegram is present but initData is missing</div>';
+                }
+            } else {
+                statusDiv.innerHTML = '<div class="text-red-600"><i class="fas fa-times-circle mr-1"></i> Not in a Telegram Mini App environment</div>';
+            }
+            
+            // Add event listener to test button
+            testBtn.addEventListener('click', testTelegramLogin);
+        });
+    </script>
+</body>
+</html> 

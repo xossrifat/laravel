@@ -1,0 +1,12 @@
+2025-05-20 16:57:09 - Starting Firebase Authentication Test
+2025-05-20 16:57:09 - Firebase Authentication Configuration:
+2025-05-20 16:57:09 - - API Key: AIzaSyAAsgamAmGeDER4iu4jfDH7CWT40r0GjRE
+2025-05-20 16:57:09 - - Enabled: Yes
+2025-05-20 16:57:09 - - Project ID: cashbd-32132
+2025-05-20 16:57:09 - - App ID: 1:399006711926:web:4eb0af896f2ce2b03c1f57
+2025-05-20 16:57:09 - - Auth Domain: cashbd-32132.firebaseapp.com
+2025-05-20 16:57:09 - - Messaging Sender ID: 399006711926
+2025-05-20 16:57:09 - 
+✅ Firebase Authentication configuration looks valid!
+2025-05-20 16:57:09 - 
+To test Firebase Authentication with a phone number, use the login or register page.

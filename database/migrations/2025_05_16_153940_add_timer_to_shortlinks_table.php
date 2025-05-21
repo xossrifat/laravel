@@ -1,0 +1,30 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::table('shortlinks', function (Blueprint $table) {
+            $table->integer('timer_duration')->nullable()->after('coins');
+            $table->integer('max_claims')->nullable()->after('timer_duration');
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::table('shortlinks', function (Blueprint $table) {
+            $table->dropColumn('timer_duration');
+            $table->dropColumn('max_claims');
+        });
+    }
+};

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telegram Web App Test</title>
+    <meta name="csrf-token" content="">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            color: #333;
+        }
+        .section {
+            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: #f5f5f5;
+            border: 1px solid #ddd;
+        }
+        h1 {
+            color: #0088cc; /* Telegram color */
+        }
+        pre {
+            background-color: #f0f0f0;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+        .button {
+            background-color: #0088cc;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        .button:hover {
+            background-color: #006699;
+        }
+        .debug {
+            font-family: monospace;
+            padding: 10px;
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            margin-top: 10px;
+            border-radius: 4px;
+        }
+    </style>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+    <h1>Telegram Web App Integration Test</h1>
+    
+    <div class="section">
+        <h2>Environment Detection</h2>
+        <div id="environment-status">Checking...</div>
+        <div class="debug" id="environment-debug"></div>
+    </div>
+    
+    <div class="section">
+        <h2>User Data</h2>
+        <div id="user-status">Not available</div>
+        <div class="debug" id="user-debug"></div>
+    </div>
+    
+    <div class="section">
+        <h2>Init Data</h2>
+        <div id="initdata-status">Not available</div>
+        <div class="debug" id="initdata-debug"></div>
+    </div>
+    
+    <div class="section">
+        <h2>Actions</h2>
+        <button id="test-login-btn" class="button">Test Login Process</button>
+        <button id="reload-btn" class="button">Reload Page</button>
+    </div>
+    
+    <script>
+        // Execute when the page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Environment check
+            const envStatus = document.getElementById('environment-status');
+            const envDebug = document.getElementById('environment-debug');
+            
+            if (window.Telegram && window.Telegram.WebApp) {
+                envStatus.innerHTML = '<span class="success">✅ Telegram WebApp detected!</span>';
+                envDebug.textContent = 'WebApp version: ' + window.Telegram.WebApp.version;
+            } else {
+                envStatus.innerHTML = '<span class="error">❌ Not running in Telegram WebApp</span>';
+                envDebug.textContent = 'This page should be opened as a Telegram Mini App to work properly.';
+            }
+            
+            // User data check
+            const userStatus = document.getElementById('user-status');
+            const userDebug = document.getElementById('user-debug');
+            
+            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+                const user = window.Telegram.WebApp.initDataUnsafe.user;
+                userStatus.innerHTML = '<span class="success">✅ User data available</span>';
+                userDebug.textContent = JSON.stringify(user, null, 2);
+            } else {
+                userStatus.innerHTML = '<span class="error">❌ User data not available</span>';
+                userDebug.textContent = 'User data could not be accessed. Make sure you are in a Telegram Mini App with the proper permissions.';
+            }
+            
+            // Init data check
+            const initStatus = document.getElementById('initdata-status');
+            const initDebug = document.getElementById('initdata-debug');
+            
+            if (window.Telegram && window.Telegram.WebApp) {
+                const initData = window.Telegram.WebApp.initData;
+                if (initData && initData.length > 0) {
+                    initStatus.innerHTML = '<span class="success">✅ Init data available</span>';
+                    // Only show first 100 chars for security
+                    initDebug.textContent = 'Init data: ' + initData.substring(0, 100) + '...';
+                } else {
+                    initStatus.innerHTML = '<span class="error">❌ Init data empty</span>';
+                    initDebug.textContent = 'No init data found. This is required for authentication.';
+                }
+            } else {
+                initStatus.innerHTML = '<span class="error">❌ Init data not available</span>';
+                initDebug.textContent = 'Cannot access Telegram WebApp init data.';
+            }
+            
+            // Setup test login button
+            document.getElementById('test-login-btn').addEventListener('click', function() {
+                if (window.Telegram && window.Telegram.WebApp) {
+                    const initData = window.Telegram.WebApp.initData;
+                    if (initData) {
+                        alert('Ready to test login! This would send the initData to your backend for authentication.');
+                    } else {
+                        alert('Error: No initData available to send for authentication.');
+                    }
+                } else {
+                    alert('Error: This must be run inside Telegram to work.');
+                }
+            });
+            
+            // Setup reload button
+            document.getElementById('reload-btn').addEventListener('click', function() {
+                window.location.reload();
+            });
+        });
+    </script>
+</body>
+</html>
